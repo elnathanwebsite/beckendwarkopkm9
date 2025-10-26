@@ -26,10 +26,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 console.log('Koneksi ke Supabase dibuat (menggunakan .env).');
 
-// --- MODIFIKASI: Endpoint root untuk cek status server ---
-app.get('/', (req, res) => {
-  res.status(200).send('Server backend berjalan! Anda sekarang bisa tes frontend.');
-});
+
 
 /**
  * Fungsi bantuan untuk membuat endpoint API dengan mudah
