@@ -6,8 +6,7 @@ import 'dotenv/config';
 
 // 2. Inisialisasi Express
 const app = express();
-app.use(cors()); // Mengizinkan request dari domain lain (penting!)
-const port = process.env.PORT || 3000;
+app.use(cors()); // Mengizinkan request dari domain lain
 
 // ===================================================================
 // AMAN: Kredensial diambil dari Environment Variables
@@ -15,16 +14,16 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 // ===================================================================
 
-// Cek apakah kredensial ada (hanya saat runtime)
+let supabase;
+
+// Cek apakah kredensial ada
 if (!supabaseUrl || !supabaseKey) {
-  console.error('Error: Kredensial Supabase (SUPABASE_URL dan SUPABASE_SERVICE_KEY) tidak diatur di Environment Variables.');
-  // Tidak perlu process.exit(1) agar Vercel bisa menangani error
+  console.error('Error: Kredensial Supabase (SUPABASE_URL dan SUPABASE_SERVICE_KEY) tidak diatur.');
+} else {
+  // 3. Buat koneksi (client) ke Supabase
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('Koneksi ke Supabase dibuat (menggunakan env).');
 }
-
-// 3. Buat koneksi (client) ke Supabase
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-console.log('Koneksi ke Supabase dibuat (menggunakan env).');
 
 /**
  * Fungsi bantuan untuk membuat endpoint API dengan mudah
@@ -33,9 +32,10 @@ function createApiEndpoint(tableName) {
   app.get(`/api/${tableName}`, async (req, res) => {
     console.log(`Mencoba mengambil data dari tabel: ${tableName}...`);
 
-    // Tambahan: Cek lagi kredensial jika error sebelumnya
-    if (!supabaseUrl || !supabaseKey) {
-        return res.status(500).json({ error: 'Konfigurasi server tidak lengkap, Kunci API hilang.' });
+    // Cek jika koneksi supabase gagal dibuat
+    if (!supabase) {
+      console.error('Koneksi Supabase tidak ada, cek Environment Variables.');
+      return res.status(500).json({ error: 'Konfigurasi server tidak lengkap, Kunci API hilang.' });
     }
 
     try {
@@ -65,6 +65,12 @@ tableNames.forEach(tableName => {
 });
 
 // 5. Jalankan server (Hanya untuk tes lokal, Vercel akan mengabaikan ini)
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server lokal berjalan di http://localhost:${port}`);
 });
+
+// ===================================================================
+// PENTING: Ekspor 'app' agar Vercel bisa menggunakannya
+export default app;
+// ===================================================================
