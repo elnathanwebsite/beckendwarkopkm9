@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Dashboard Supabase</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Grid untuk menampung semua card data */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        /* Styling untuk satu card data */
+        .data-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden; /* Agar <pre> tidak keluar dari card */
+        }
+
+        .data-card h2 {
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            margin: 0;
+            text-transform: capitalize; /* Membuat 'contacts' jadi 'Contacts' */
+        }
+
+        /* Kotak untuk menampilkan data JSON */
+        pre.data-json {
+            background-color: #2d3436;
+            color: #dfe6e9;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 5px;
+            overflow-x: auto; /* Scroll ke samping jika data terlalu panjang */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+
+        pre.loading {
+            color: #aaa;
+            font-style: italic;
+        }
+        
+        pre.error {
+            background-color: #ffe8e8;
+            color: #d8000c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dashboard Data Supabase</h1>
+
+    <div class="dashboard-container" id="dashboard">
+        </div>
+
+    <script>
+        // Jalankan skrip setelah halaman HTML selesai dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Daftar semua tabel yang ingin kita ambil datanya
+            const tables = ['contacts', 'gallery', 'menu', 'orders', 'payments', 'settings'];
+            
+            const dashboardContainer = document.getElementById('dashboard');
+            const BASE_URL = 'https://beckendwarkopkm9.vercel.app/'; // URL backend Anda
+
+            // Fungsi untuk membuat card HTMLhttps://beckendwarkopkm9.vercel.app/
+            function createCard(tableName) {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                
+                card.innerHTML = `
+                    <h2>${tableName}</h2>
+                    <pre id="data-${tableName}" class="data-json loading">Memuat data...</pre>
+                `;
+                
+                dashboardContainer.appendChild(card);
+            }
+
+            // Fungsi untuk mengambil data dari backend
+            async function fetchData(tableName) {
+                const targetElement = document.getElementById(`data-${tableName}`);
+
+                try {
+                    const response = await fetch(`${BASE_URL}/${tableName}`);
+
+                    if (!response.ok) {
+                        // Menangkap error jika server membalas 404, 500, dll.
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Tampilkan data JSON dengan format yang rapi (pretty-print)
+                    targetElement.textContent = JSON.stringify(data, null, 2);
+                    targetElement.classList.remove('loading');
+                
+                } catch (error) {
+                    // Menampilkan pesan error di card jika gagal fetch
+                    console.error(`Gagal mengambil data untuk ${tableName}:`, error);
+                    targetElement.textContent = `Gagal memuat data:\n${error.message}\n\nPastikan backend server berjalan.`;
+                    targetElement.classList.remove('loading');
+                    targetElement.classList.add('error');
+                }
+            }
+
+            // Loop untuk membuat card dan mengambil data untuk setiap tabel
+            tables.forEach(tableName => {
+                createCard(tableName);
+                fetchData(tableName);
+            });
+
+        });
+    </script>
+
+</body>
+</html>
